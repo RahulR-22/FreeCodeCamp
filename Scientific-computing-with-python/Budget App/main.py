@@ -1,3 +1,6 @@
+import math
+
+
 class Category:
 
     def __init__(self, category: str):
@@ -48,8 +51,50 @@ class Category:
         return response
 
 
-def create_spend_chart(categories):
-    pass
+def createChart(categories: dict):
+    noOfCategories = len(categories)
+    percentvalues = categories.values()
+    percentages = [f"{str(i):>3}" for i in range(0, 101, 10)]
+    response = "Percentage spent by category\n"
+    filled_index = [0]*noOfCategories
+    for i in range(10, -1, -1):
+        line = f"{percentages[i]}| "
+        current_percent = i*10
+        ind = [k for k, val in enumerate(percentvalues) if val == current_percent]
+        for index in range(noOfCategories):
+            if index in ind or filled_index[index]:
+                filled_index[index] = 1
+                line += f"o{' '*2}"
+            else:
+                line += f"{' '*3}"
+        response += f"{line}\n"
+    response += f"{' '*4}-{'-'*3*noOfCategories}\n"
+    categoryKeys = categories.keys()
+    maxLength = max([len(i) for i in categoryKeys])
+    categoryList = []
+    for key in categoryKeys:
+        result = list(f"{key:<{maxLength}}")
+        categoryList.append(result)
+    result = list(zip(*categoryList))
+    for keys in range(len(result)):
+        response += f"{' ' * 5}"
+        response += f"{' ' * 2}".join(result[keys])
+        response += '  '
+        if keys != len(result) - 1:
+            response += '\n'
+    return response
 
+
+def create_spend_chart(categories: list[Category]):
+    category_total = {}
+    for category in categories:
+        for transaction in category.ledger:
+            if transaction['amount'] < 0:
+                category_total[category.category] = category_total.get(category.category, 0) + (-transaction['amount'])
+    total = sum(category_total.values())
+    for category in category_total:
+        percent = math.floor((category_total[category]*100) / total) // 10
+        category_total[category] = int(percent) * 10
+    return createChart(category_total)
 
 
